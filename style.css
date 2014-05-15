@@ -1,0 +1,7 @@
+html, body {
+  text-align: center;
+}
+
+#grid {
+  border: 1px solid grey;
+}
