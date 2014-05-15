@@ -3,9 +3,13 @@ log = console.log.bind(console);
 
 var Grid = {};
 
-var WIDTH      = 50,
-    HEIGHT     = 50,
-    PIXELWIDTH = 15,
+// var WIDTH      = 50,
+//     HEIGHT     = 50,
+//     PIXELWIDTH = 15,
+//     SPEED      = 30; // Milliseconds
+var WIDTH      = 160,
+    HEIGHT     = 90,
+    PIXELWIDTH = 10,
     SPEED      = 30; // Milliseconds
 
 Grid.setup = function(width, height, pixelWidth, canvas) {
@@ -99,13 +103,22 @@ Grid.nextGeneration = function() {
 
 document.addEventListener("DOMContentLoaded", function() {
   Grid.setup(WIDTH, HEIGHT, PIXELWIDTH, document.getElementById("grid"));
-  Grid.applyPreset("glidergun");
+  // Grid.applyPreset("glidergun");
+  Grid.createRandom(8);
   var paused = true,
-      generate;
+      generate,
+      generationNumber = 0,
+      generationNumberEl = document.getElementById("gen-num");
   document.addEventListener("keydown", function(e) {
-    if (e.which === 32) {
+    if (e.which === 190 && Grid.presets.random) {
+      Grid.applyPreset("random");
+      generationNumber = 0;
+      generationNumberEl.innerText = generationNumber;
+    } else if (e.which === 32) {
       e.preventDefault();
       Grid.nextGeneration();
+      generationNumber += 1;
+      generationNumberEl.innerText = generationNumber;
     } else if (e.which === 13) {
       paused = !paused;
       if (paused) {
@@ -113,6 +126,8 @@ document.addEventListener("DOMContentLoaded", function() {
       } else {
         generate = window.setInterval(function() {
           Grid.nextGeneration();
+          generationNumber += 1;
+          generationNumberEl.innerText = generationNumber;
         }, SPEED);
       }
     }
