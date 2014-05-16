@@ -1,8 +1,10 @@
-Grid.presetDimensions = {
-  glidergun: [50, 30]
-};
 Grid.presets = {
   glidergun: ["                                                  ",
+              "                                                  ",
+              "                                                  ",
+              "                                                  ",
+              "                                                  ",
+              "                                                  ",
               "                                                  ",
               "                          *                       ",
               "                        * *                       ",
@@ -26,21 +28,37 @@ Grid.presets = {
               "                                                  ",
               "                                                  ",
               "                                                  ",
+              "                                                  ",
+              "                                                  ",
+              "                                                  ",
+              "                                                  ",
+              "                                                  ",
+              "                                                  ",
+              "                                                  ",
+              "                                                  ",
+              "                                                  ",
+              "                                                  ",
+              "                                                  ",
+              "                                                  ",
+              "                                                  ",
+              "                                                  ",
+              "                                                  ",
+              "                                                  ",
+              "                                                  ",
+              "                                                  ",
+              "                                                  ",
+              "                                                  ",
               "                                                  "]
 };
 
 Grid.applyPreset = function(preset) {
-  if (this.presetDimensions.hasOwnProperty(preset)) {
-    var dimensions = this.presetDimensions[preset];
-    this.setup(dimensions[0], dimensions[1], this.hiddenRegionSize, this.canvas);
-  }
   Grid.resetGrid();
   Grid.context.beginPath();
-  for (var y = 0; y < this.height - this.hiddenRegionSize, y < this.presets[preset].length; ++y) {
-    var row = this.presets[preset][y].split("");
-    for (var x = 0; x < this.width - this.hiddenRegionSize; ++x) {
+  for (var y = 0; y < this.height; ++y) {
+    var row = this.presets[preset][y % (this.presets[preset].length - 1)].split("");
+    for (var x = 0; x < this.width; ++x) {
       if (row[x] === "*") {
-        this.pixels[y + this.initialY][x + this.initialX] = true;
+        this.pixels[y][x] = true;
         Grid.putPixel(x, y);
       }
     }
