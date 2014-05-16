@@ -6,25 +6,75 @@ log = console.log.bind(console);
 
 var Grid = {};
 
-var WIDTH      = 100,
-    HEIGHT     = 50,
-    PIXELWIDTH = 17,
+var WIDTH       = 57,
+    HEIGHT      = 35,
+    GUTTERSIZE = 8,  // Amount of offscreen pixel spaces
     SPEED      = 30; // Milliseconds
 
-Grid.setup = function(width, height, pixelWidth, canvas) {
-  this.canvas        = canvas;
-  this.canvas.width  = width  * pixelWidth;
-  this.canvas.height = height * pixelWidth;
-  this.paused        = true;
-  this.width         = width;
-  this.height        = height;
-  this.context       = this.canvas.getContext("2d");
-  this.pixelWidth    = pixelWidth;
+Grid.calculateDimensions = function() {
+  this.setup(this.widthSlider.valueAsNumber, this.heightSlider.valueAsNumber, this.hiddenRegionSize, this.canvas, true);
+};
+
+Grid.setSliderValues = function() {
+  this.widthSliderValue.innerText = this.widthSlider.value;
+  this.heightSliderValue.innerText = this.heightSlider.value;
+};
+
+Grid.addListeners = function() {
+  document.addEventListener("keydown", this.key.down, false);
   this.canvas.addEventListener("mousedown", this.mouse.down, false);
   this.canvas.addEventListener("mouseup", this.mouse.up, false);
   this.canvas.addEventListener("mousemove", this.mouse.move, false);
+  this.widthSlider.addEventListener("input", this.setSliderValues.bind(this), false);
+  this.heightSlider.addEventListener("input", this.setSliderValues.bind(this), false);
+  this.widthSlider.addEventListener("change", this.calculateDimensions.bind(this), false);
+  this.heightSlider.addEventListener("change", this.calculateDimensions.bind(this), false);
+};
+
+Grid.removeListeners = function() {
+  document.removeEventListener("keydown", this.key.down, false);
+  this.canvas.removeEventListener("mousedown", this.mouse.down, false);
+  this.canvas.removeEventListener("mouseup", this.mouse.up, false);
+  this.canvas.removeEventListener("mousemove", this.mouse.move, false);
+  this.widthSlider.removeEventListener("input", this.setSliderValues.bind(this), false);
+  this.heightSlider.removeEventListener("input", this.setSliderValues.bind(this), false);
+  this.widthSlider.removeEventListener("change", this.calculateDimensions.bind(this), false);
+  this.heightSlider.removeEventListener("change", this.calculateDimensions.bind(this), false);
+};
+
+Grid.setup = function(width, height, gutterSize, canvas, resize) {
+  this.canvas = canvas;
+  this.initialWidth = width;
+  this.initialHeight = height;
+  this.canvas.width = width % (window.innerWidth - 2);
+  this.canvas.height = height % (window.innerHeight - 40);
+  this.pixelWidth = Math.floor(Math.min((window.innerWidth - 2) / width, (window.innerHeight - 40) / height));
+  this.canvas.width = this.pixelWidth * width;
+  this.canvas.height = this.pixelWidth * height;
+  this.hiddenRegionSize = gutterSize;
+  this.hiddenRegionWidth = Math.ceil(width + this.hiddenRegionSize);
+  this.hiddenRegionHeight = Math.ceil(height + this.hiddenRegionSize);
+  this.initialX = parseInt(this.hiddenRegionSize / 2);
+  this.initialY = parseInt(this.hiddenRegionSize / 2);
+  this.width = this.hiddenRegionWidth;
+  this.height = this.hiddenRegionHeight;
+  this.context = this.canvas.getContext("2d");
+  this.pixelScaleX = this.canvas.width / this.canvas.offsetWidth;
+  this.pixelScaleY = this.canvas.height / this.canvas.offsetHeight;
+  this.paused = true;
   this.generationNumber = 0;
-  document.addEventListener("keydown", this.key.down, false);
+  this.generationNumberEl = document.getElementById("gen-num");
+  this.widthSlider = document.getElementById("width");
+  this.heightSlider = document.getElementById("height");
+  this.heightSliderValue = document.getElementById("height-value");
+  this.widthSliderValue = document.getElementById("width-value");
+  if (!resize) {
+    this.addListeners();
+  }
+  this.widthSliderValue.innerText = this.initialWidth;
+  this.heightSliderValue.innerText = this.initialHeight;
+  this.heightSlider.value = this.initialHeight;
+  this.widthSlider.value = this.initialWidth;
   this.resetGrid();
 };
 
@@ -43,10 +93,10 @@ Grid.drawOutLine = function() {
 };
 
 Grid.createGrid = function() {
-  return Array.apply(null, new Array(this.height))
+  return Array.apply(null, new Array(this.height + this.hiddenRegionSize))
     .map(Boolean.prototype.valueOf, false)
     .map(function() {
-      return Array.apply(null, new Array(this.width))
+      return Array.apply(null, new Array(this.width + this.hiddenRegionSize))
         .map(Boolean.prototype.valueOf, false);
     }.bind(this));
 };
@@ -63,21 +113,12 @@ Grid.resetGrid = function() {
 };
 
 Grid.putPixel = function(x, y) {
-  this.pixels[y][x] = true;
+  this.pixels[y + this.initialY][x + this.initialX] = true;
   this.context.rect(x * this.pixelWidth + 1, y * this.pixelWidth + 1, this.pixelWidth - 2, this.pixelWidth - 2);
 };
 
-Grid.flipPixel = function(x, y) {
-  this.pixels[y][x] = !this.pixels[y][x];
-  if (this.pixels[y][x]) {
-    this.context.rect(x * this.pixelWidth, y * this.pixelWidth, this.pixelWidth, this.pixelWidth);
-  } else {
-    this.context.clearRect(x * this.pixelWidth, y * this.pixelWidth, this.pixelWidth, this.pixelWidth);
-  }
-};
-
 Grid.delPixel = function(x, y) {
-  this.pixels[y][x] = false;
+  this.pixels[y + this.initialY][x + this.initialX] = false;
   this.context.clearRect(x * this.pixelWidth + 1, y * this.pixelWidth + 1, this.pixelWidth - 2, this.pixelWidth - 2);
 };
 
@@ -120,7 +161,7 @@ Grid.nextGeneration = function() {
   for (y = 0; y < this.height; ++y) {
     for (x = 0; x < this.width; ++x) {
       if (this.genStep[y][x]) {
-        this.putPixel(x, y);
+        this.putPixel(x - this.initialX, y - this.initialY);
         this.pixels[y][x] = true;
       } else {
         this.pixels[y][x] = false;
@@ -134,15 +175,14 @@ Grid.nextGeneration = function() {
 Grid.mouse = {
   move: function(ev) {
     if (this.mouseHeld) {
-      var x = Math.floor(ev.offsetX / Grid.pixelWidth),
-          y = Math.floor(ev.offsetY / Grid.pixelWidth);
+      var x = Math.floor((ev.offsetX || ev.clientX - Grid.canvas.offsetLeft) * Grid.pixelScaleX / Grid.pixelWidth),
+          y = Math.floor((ev.offsetY || ev.clientY - Grid.canvas.offsetTop) * Grid.pixelScaleY / Grid.pixelWidth);
       if (this.oldX === x && this.oldY === y) {
         return false;
       }
       this.oldX = x;
       this.oldY = y;
       Grid.context.beginPath();
-      // Grid.flipPixel(x, y);
       if (this.rightClick) {
         Grid.delPixel(x, y);
       } else {
@@ -154,8 +194,8 @@ Grid.mouse = {
   },
   down: function(ev) {
     this.mouseHeld = true;
-    var x = Math.floor(ev.offsetX / Grid.pixelWidth),
-        y = Math.floor(ev.offsetY / Grid.pixelWidth);
+    var x = Math.floor((ev.offsetX || ev.clientX - Grid.canvas.offsetLeft) * Grid.pixelScaleX / Grid.pixelWidth),
+        y = Math.floor((ev.offsetY || ev.clientY - Grid.canvas.offsetTop) * Grid.pixelScaleY / Grid.pixelWidth);
     this.oldX = x;
     this.oldY = y;
     this.rightClick = ev.which === 3;
@@ -165,12 +205,25 @@ Grid.mouse = {
     } else {
       Grid.putPixel(x, y);
     }
-    // Grid.flipPixel(x, y);
     Grid.context.closePath();
     Grid.context.fill();
   },
   up: function() {
     this.mouseHeld = false;
+  }
+};
+
+Grid.generationLoop = function(start, speed) {
+  Grid.generationNumberEl.innerText = Grid.generationNumber;
+  this.loop = function() {
+    Grid.nextGeneration();
+    Grid.generationNumber += 1;
+    if (!Grid.paused) {
+      window.setTimeout(Grid.loop, speed);
+    }
+  };
+  if (start) {
+    this.loop();
   }
 };
 
@@ -188,20 +241,15 @@ Grid.key = {
     } else if (ev.which === 13) {
       Grid.paused = !Grid.paused;
       if (Grid.paused) {
-        window.clearInterval(Grid.generationLoop);
+        Grid.generationLoop(false, SPEED);
       } else {
-        Grid.generationLoop = window.setInterval(function() {
-          Grid.nextGeneration();
-          Grid.generationNumber += 1;
-          document.getElementById("gen-num").innerText = Grid.generationNumber;
-        }, SPEED);
+        Grid.generationLoop(true, SPEED);
       }
     }
   }
 };
 
 document.addEventListener("DOMContentLoaded", function() {
-  Grid.setup(WIDTH, HEIGHT, PIXELWIDTH, document.getElementById("grid"));
+  Grid.setup(WIDTH, HEIGHT, GUTTERSIZE, document.getElementById("grid"));
   Grid.applyPreset("glidergun");
-  // Grid.createRandom(8);
 }, false);

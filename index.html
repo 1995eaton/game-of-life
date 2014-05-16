@@ -8,7 +8,18 @@
   <script src="./grids.js"></script>
 </head>
 <body>
-<canvas id="grid" oncontextmenu="javascript:return false;"></canvas>
-<p>Press space to step forward &ndash; press Enter to play/pause sequence (generation <span id="gen-num">0</span>)</p>
+<div id="main-container">
+  <canvas id="grid" oncontextmenu="javascript:return false;"></canvas>
+</div>
+<div id="settings">
+  Width: <input id="width" type="range" min="1" max="150"><span id="width-value"></span>
+  Height: <input id="height" type="range" min="1" max="150"><span id="height-value"></span>
+  <input id="random" type="button" onclick="Grid.createRandom(4)" value="Random Grid">
+  Presets: <select id="presets">
+    <option value="glidergun">Glider Gun</option>
+  </select>
+  <input id="applypreset" type="button" onclick='Grid.applyPreset(document.getElementById("presets").value);this.blur()' value="Apply Preset">
+  Press space to step forward &ndash; press Enter to play/pause sequence (generation <span id="gen-num">0</span>)
+</div>
 </body>
 </html>
