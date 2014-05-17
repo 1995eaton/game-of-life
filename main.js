@@ -6,8 +6,8 @@ log = console.log.bind(console);
 
 var Grid = {};
 
-var WIDTH       = 57,
-    HEIGHT      = 35,
+var WIDTH       = 150,
+    HEIGHT      = 80,
     GUTTERSIZE = 8,  // Amount of offscreen pixel spaces
     SPEED      = 30; // Milliseconds
 
@@ -18,6 +18,8 @@ Grid.calculateDimensions = function() {
 Grid.setSliderValues = function() {
   this.widthSliderValue.innerText = this.widthSlider.value;
   this.heightSliderValue.innerText = this.heightSlider.value;
+  this.delaySliderValue.innerText = this.delaySlider.value;
+  SPEED = this.delaySlider.valueAsNumber;
 };
 
 Grid.addListeners = function() {
@@ -27,6 +29,7 @@ Grid.addListeners = function() {
   this.canvas.addEventListener("mousemove", this.mouse.move, false);
   this.widthSlider.addEventListener("input", this.setSliderValues.bind(this), false);
   this.heightSlider.addEventListener("input", this.setSliderValues.bind(this), false);
+  this.delaySlider.addEventListener("input", this.setSliderValues.bind(this), false);
   this.widthSlider.addEventListener("change", this.calculateDimensions.bind(this), false);
   this.heightSlider.addEventListener("change", this.calculateDimensions.bind(this), false);
 };
@@ -38,6 +41,7 @@ Grid.removeListeners = function() {
   this.canvas.removeEventListener("mousemove", this.mouse.move, false);
   this.widthSlider.removeEventListener("input", this.setSliderValues.bind(this), false);
   this.heightSlider.removeEventListener("input", this.setSliderValues.bind(this), false);
+  this.delaySlider.removeEventListner("input", this.setSliderValues.bind(this), false);
   this.widthSlider.removeEventListener("change", this.calculateDimensions.bind(this), false);
   this.heightSlider.removeEventListener("change", this.calculateDimensions.bind(this), false);
 };
@@ -68,13 +72,17 @@ Grid.setup = function(width, height, gutterSize, canvas, resize) {
   this.heightSlider = document.getElementById("height");
   this.heightSliderValue = document.getElementById("height-value");
   this.widthSliderValue = document.getElementById("width-value");
+  this.delaySlider = document.getElementById("delay");
+  this.delaySliderValue = document.getElementById("delay-value");
   if (!resize) {
     this.addListeners();
   }
   this.widthSliderValue.innerText = this.initialWidth;
   this.heightSliderValue.innerText = this.initialHeight;
+  this.delaySliderValue.innerText = SPEED;
   this.heightSlider.value = this.initialHeight;
   this.widthSlider.value = this.initialWidth;
+  this.delaySlider.value = SPEED;
   this.resetGrid();
 };
 
@@ -213,13 +221,13 @@ Grid.mouse = {
   }
 };
 
-Grid.generationLoop = function(start, speed) {
+Grid.generationLoop = function(start) {
   Grid.generationNumberEl.innerText = Grid.generationNumber;
   this.loop = function() {
     Grid.nextGeneration();
     Grid.generationNumber += 1;
     if (!Grid.paused) {
-      window.setTimeout(Grid.loop, speed);
+      window.setTimeout(Grid.loop, SPEED);
     }
   };
   if (start) {
@@ -241,9 +249,9 @@ Grid.key = {
     } else if (ev.which === 13) {
       Grid.paused = !Grid.paused;
       if (Grid.paused) {
-        Grid.generationLoop(false, SPEED);
+        Grid.generationLoop(false);
       } else {
-        Grid.generationLoop(true, SPEED);
+        Grid.generationLoop(true);
       }
     }
   }
@@ -251,5 +259,5 @@ Grid.key = {
 
 document.addEventListener("DOMContentLoaded", function() {
   Grid.setup(WIDTH, HEIGHT, GUTTERSIZE, document.getElementById("grid"));
-  Grid.applyPreset("glidergun");
+  Grid.appendPresets();
 }, false);
