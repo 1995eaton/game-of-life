@@ -131,19 +131,13 @@ Grid.delPixel = function(x, y) {
 };
 
 Grid.neighborCount = function(x, y) {
-  var count = 0;
-  var gy = y > 0,
-      gx = x > 0,
-      ly = y + 1 < this.height,
-      lx = x + 1 < this.width;
-  if (gy && gx && this.pixels[y - 1][x - 1]) count += 1;
-  if (gy && this.pixels[y - 1][x]) count += 1;
-  if (gy && lx && this.pixels[y - 1][x + 1]) count += 1;
-  if (gx && this.pixels[y][x - 1]) count += 1;
-  if (lx && this.pixels[y][x + 1]) count += 1;
-  if (ly && gx && this.pixels[y + 1][x - 1]) count += 1;
-  if (ly && this.pixels[y + 1][x]) count += 1;
-  if (ly && lx && this.pixels[y + 1][x + 1]) count += 1;
+  for (var x1 = x - 1 < 0 ? 0 : x - 1, count = 0; x1 + 1 < this.width, x1 <= x + 1; ++x1) {
+    for (var y1 = y - 1; y1 + 1 < this.height, y1 <= y + 1; ++y1) {
+      if (!(x1 === x && y1 === y) && y1 >= 0 && this.pixels[y1][x1] && (count += 1) > 3) {
+        break;
+      }
+    }
+  }
   return count;
 };
 
@@ -157,7 +151,7 @@ Grid.nextGeneration = function() {
       var count = this.neighborCount(x, y);
       if (count < 2) {
         this.genStep[y][x] = false;
-      } else if (this.pixels[y][x] && (count === 2 || count === 3)) {
+      } else if (this.pixels[y][x] && !(6 % count)) {
         this.genStep[y][x] = true;
       } else if (this.pixels[y][x] && count > 3) {
         this.genStep[y][x] = false;
