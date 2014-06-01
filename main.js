@@ -6,8 +6,8 @@ log = console.log.bind(console);
 
 var Grid = {};
 
-var WIDTH       = 57,
-    HEIGHT      = 35,
+var WIDTH       = 150,
+    HEIGHT      = 80,
     GUTTERSIZE = 8,  // Amount of offscreen pixel spaces
     SPEED      = 30; // Milliseconds
 
@@ -18,6 +18,8 @@ Grid.calculateDimensions = function() {
 Grid.setSliderValues = function() {
   this.widthSliderValue.innerText = this.widthSlider.value;
   this.heightSliderValue.innerText = this.heightSlider.value;
+  this.delaySliderValue.innerText = this.delaySlider.value;
+  SPEED = this.delaySlider.valueAsNumber;
 };
 
 Grid.addListeners = function() {
@@ -27,6 +29,7 @@ Grid.addListeners = function() {
   this.canvas.addEventListener("mousemove", this.mouse.move, false);
   this.widthSlider.addEventListener("input", this.setSliderValues.bind(this), false);
   this.heightSlider.addEventListener("input", this.setSliderValues.bind(this), false);
+  this.delaySlider.addEventListener("input", this.setSliderValues.bind(this), false);
   this.widthSlider.addEventListener("change", this.calculateDimensions.bind(this), false);
   this.heightSlider.addEventListener("change", this.calculateDimensions.bind(this), false);
 };
@@ -38,6 +41,7 @@ Grid.removeListeners = function() {
   this.canvas.removeEventListener("mousemove", this.mouse.move, false);
   this.widthSlider.removeEventListener("input", this.setSliderValues.bind(this), false);
   this.heightSlider.removeEventListener("input", this.setSliderValues.bind(this), false);
+  this.delaySlider.removeEventListner("input", this.setSliderValues.bind(this), false);
   this.widthSlider.removeEventListener("change", this.calculateDimensions.bind(this), false);
   this.heightSlider.removeEventListener("change", this.calculateDimensions.bind(this), false);
 };
@@ -68,13 +72,17 @@ Grid.setup = function(width, height, gutterSize, canvas, resize) {
   this.heightSlider = document.getElementById("height");
   this.heightSliderValue = document.getElementById("height-value");
   this.widthSliderValue = document.getElementById("width-value");
+  this.delaySlider = document.getElementById("delay");
+  this.delaySliderValue = document.getElementById("delay-value");
   if (!resize) {
     this.addListeners();
   }
   this.widthSliderValue.innerText = this.initialWidth;
   this.heightSliderValue.innerText = this.initialHeight;
+  this.delaySliderValue.innerText = SPEED;
   this.heightSlider.value = this.initialHeight;
   this.widthSlider.value = this.initialWidth;
+  this.delaySlider.value = SPEED;
   this.resetGrid();
 };
 
@@ -123,19 +131,13 @@ Grid.delPixel = function(x, y) {
 };
 
 Grid.neighborCount = function(x, y) {
-  var count = 0;
-  var gy = y > 0,
-      gx = x > 0,
-      ly = y + 1 < this.height,
-      lx = x + 1 < this.width;
-  if (gy && gx && this.pixels[y - 1][x - 1]) count += 1;
-  if (gy && this.pixels[y - 1][x]) count += 1;
-  if (gy && lx && this.pixels[y - 1][x + 1]) count += 1;
-  if (gx && this.pixels[y][x - 1]) count += 1;
-  if (lx && this.pixels[y][x + 1]) count += 1;
-  if (ly && gx && this.pixels[y + 1][x - 1]) count += 1;
-  if (ly && this.pixels[y + 1][x]) count += 1;
-  if (ly && lx && this.pixels[y + 1][x + 1]) count += 1;
+  for (var x1 = x - 1 < 0 ? 0 : x - 1, count = 0; x1 + 1 < this.width, x1 <= x + 1; ++x1) {
+    for (var y1 = y - 1; y1 + 1 < this.height, y1 <= y + 1; ++y1) {
+      if (!(x1 === x && y1 === y) && y1 >= 0 && this.pixels[y1][x1] && (count += 1) > 3) {
+        break;
+      }
+    }
+  }
   return count;
 };
 
@@ -149,7 +151,7 @@ Grid.nextGeneration = function() {
       var count = this.neighborCount(x, y);
       if (count < 2) {
         this.genStep[y][x] = false;
-      } else if (this.pixels[y][x] && (count === 2 || count === 3)) {
+      } else if (this.pixels[y][x] && !(6 % count)) {
         this.genStep[y][x] = true;
       } else if (this.pixels[y][x] && count > 3) {
         this.genStep[y][x] = false;
@@ -213,13 +215,13 @@ Grid.mouse = {
   }
 };
 
-Grid.generationLoop = function(start, speed) {
+Grid.generationLoop = function(start) {
   Grid.generationNumberEl.innerText = Grid.generationNumber;
   this.loop = function() {
     Grid.nextGeneration();
     Grid.generationNumber += 1;
     if (!Grid.paused) {
-      window.setTimeout(Grid.loop, speed);
+      window.setTimeout(Grid.loop, SPEED);
     }
   };
   if (start) {
@@ -241,9 +243,9 @@ Grid.key = {
     } else if (ev.which === 13) {
       Grid.paused = !Grid.paused;
       if (Grid.paused) {
-        Grid.generationLoop(false, SPEED);
+        Grid.generationLoop(false);
       } else {
-        Grid.generationLoop(true, SPEED);
+        Grid.generationLoop(true);
       }
     }
   }
@@ -251,5 +253,5 @@ Grid.key = {
 
 document.addEventListener("DOMContentLoaded", function() {
   Grid.setup(WIDTH, HEIGHT, GUTTERSIZE, document.getElementById("grid"));
-  Grid.applyPreset("glidergun");
+  Grid.appendPresets();
 }, false);
