@@ -15,7 +15,7 @@
   Width: <input id="width" type="range" min="1" max="300"><span id="width-value"></span>
   Height: <input id="height" type="range" min="1" max="300"><span id="height-value"></span>
   Delay (milliseconds): <input id="delay" type="range" min="0" max="350"><span id="delay-value"></span>
-  <input id="random" type="button" onclick="Grid.createRandom(4)" value="Random Grid">
+  <input id="random" type="button" onclick="this.blur();Grid.createRandom(4)" value="Random Grid">
   Presets: <select id="presets">
   </select>
   <input id="applypreset" type="button" onclick='Grid.applyPreset(document.getElementById("presets").value);this.blur()' value="Apply Preset">
