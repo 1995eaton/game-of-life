@@ -6,8 +6,8 @@ log = console.log.bind(console);
 
 var Grid = {};
 
-var WIDTH       = 150,
-    HEIGHT      = 80,
+var WIDTH       = 90,
+    HEIGHT      = 50,
     GUTTERSIZE = 8,  // Amount of offscreen pixel spaces
     SPEED      = 30; // Milliseconds
 
